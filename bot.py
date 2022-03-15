@@ -1,24 +1,41 @@
 import requests
+import time
 
 
-TOKEN = 'YOUR TOKEN'
-href_getUpdates = f'https://api.telegram.org/bot{TOKEN}/getUpdates'
-content = requests.get(href_getUpdates)
-cnt_of_requests = len(content.json()['result'])
+class Bot:
+    def __init__(self, token): 
+        self.__token = token 
+        self.__telegram_api_url = "https://api.telegram.org/bot{token}/{method}".format(
+            token=self.__token, method="{method}"
+        )  
 
-while True:
-    href_getUpdates = f'https://api.telegram.org/bot{TOKEN}/getUpdates'
-    content = requests.get(href_getUpdates)
+        self.__verify_token()
 
-    check_requests = cnt_of_requests
-    cnt_of_requests = len(content.json()['result'])
+    def get_me(self):
+        method_url = self.__telegram_api_url.format(method="getMe")
 
-    if cnt_of_requests > check_requests:
-        message_text = content.json()['result'][cnt_of_requests-1]['message']['text']
-        user_id = content.json()['result'][cnt_of_requests-1]['message']['from']['id']
-        parameters = {'chat_id': user_id,'text': message_text}
+        response = requests.get(
+            method_url
+        )  
 
-        href_sendMessage = f'https://api.telegram.org/bot{TOKEN}/sendMessage'
-        content2 = requests.get(href_sendMessage, params=parameters)
-        print(content2.json())
-                
+        response_json = response.json()
+
+        return response_json
+
+    def __verify_token(self):
+        token_status = self.get_me()["ok"]
+        if not token_status:
+            raise Exception("Токен бота не верен")
+
+    def start_pooling(self):
+        method_url = self.__telegram_api_url.format(
+            method="getUpdates"
+        )  
+        while True:
+            response = requests.get(
+                method_url
+            ) 
+            response_json = response.json()
+            yield response_json
+            time.sleep(3)
+
