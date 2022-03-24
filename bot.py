@@ -1,6 +1,8 @@
 import requests
 import time
 
+from type import Event
+
 
 class Bot:
     def __init__(self, token): 
@@ -35,7 +37,8 @@ class Bot:
             response = requests.get(
                 method_url
             ) 
-            response_json = response.json()
-            yield response_json
-            time.sleep(3)
+            events = response.json()["result"]
+
+            for event in events:
+                yield Event(**event)
 
